@@ -43,7 +43,8 @@
         // 2. Go to Dashboard > Developers
         // 3. Create new application
         // 4. Copy the Client Token (starts with MLY|)
-        mapillaryAccessToken: MLY|25451962234457270|587e6bbe253fe0be7efcfa8ead799149, // <-- REPLACE THIS
+        mapillaryAccessToken: // RIGHT: Added quotes
+accessToken: 'MLY|7096961157099603|7fb2ed4b52bc77827ab9451bf2ec3d8c', // <-- REPLACE THIS
 
         // === LOCAL STORAGE KEYS ===
         storageKeys: {
@@ -989,7 +990,8 @@
         console.log('🛣️ Opening Street View at:', lat, lng);
 
         // Check if Mapillary token is set
-        if (!CONFIG.mapillaryAccessToken || CONFIG.mapillaryAccessToken === MLY|25451962234457270|587e6bbe253fe0be7efcfa8ead799149) {
+        if (!CONFIG.mapillaryAccessToken || CONFIG.mapillaryAccessToken === // RIGHT: Added quotes
+accessToken: 'MLY|7096961157099603|7fb2ed4b52bc77827ab9451bf2ec3d8c',) {
             showErrorNotification('Mapillary API key required. See console for instructions.');
             console.error(`
 ╔════════════════════════════════════════════════════════════╗
@@ -2313,7 +2315,8 @@
             console.log('✅ Tactical Command Map ready');
 
             // Log Mapillary API instructions if not configured
-            if (!CONFIG.mapillaryAccessToken || CONFIG.mapillaryAccessToken === MLY|25451962234457270|587e6bbe253fe0be7efcfa8ead799149) {
+            if (!CONFIG.mapillaryAccessToken || CONFIG.mapillaryAccessToken === // RIGHT: Added quotes
+accessToken: 'MLY|7096961157099603|7fb2ed4b52bc77827ab9451bf2ec3d8c',) {
                 console.log(`
 ╔════════════════════════════════════════════════════════════════════╗
 ║                    MAPILLARY API KEY SETUP                         ║
