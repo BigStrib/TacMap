@@ -6,7 +6,7 @@ body, html { height: 100%; width: 100%; overflow: hidden; background: #000; font
 #map { height: 100%; width: 100%; z-index: 1; }
 #mly { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 50; display: none; background: #000; }
 
-/* The Bottom Dock */
+/* The Bottom Dock! */
 #ui-panel {
     position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%);
     z-index: 100; width: 92%; max-width: 420px;
@@ -57,4 +57,5 @@ body, html { height: 100%; width: 100%; overflow: hidden; background: #000; font
 }
 
 .hidden { display: none !important; }
+
 .leaflet-control-container { display: none; }
