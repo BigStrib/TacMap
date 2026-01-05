@@ -1,12 +1,11 @@
 /**
- * StreetView Pro - Core Logic
- * Start Location: Eugene, Oregon
- * Default View: Satellite
+ * StreetView Pro - Eugene Oregon Edition
+ * Starting View: Satellite
  */
 
 const MLY_ACCESS_TOKEN = 'MLY|25451962234457270|587e6bbe253fe0be7efcfa8ead799149';
 
-// 1. Define Map Layers
+// 1. Map Layers
 const layers = {
     satellite: L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
         attribution: 'Esri'
@@ -26,125 +25,95 @@ const layers = {
 const map = L.map('map', {
     center: [44.0521, -123.0868],
     zoom: 15,
-    layers: [layers.satellite], // Satellite default
-    zoomControl: false          // Professional clean top
+    layers: [layers.satellite], 
+    zoomControl: false
 });
 
 let mlyViewer = null;
 
-// 3. Map Style Switcher Logic
-const styleDropdown = document.getElementById('map-styles');
-if (styleDropdown) {
-    styleDropdown.addEventListener('change', (e) => {
-        const selectedStyle = e.target.value;
-        // Remove all current layers
+// 3. UI Element References
+const elements = {
+    styleDropdown: document.getElementById('map-styles'),
+    locationInput: document.getElementById('location-input'),
+    searchBtn: document.getElementById('search-btn'),
+    dragPin: document.getElementById('drag-indicator'),
+    closeMlyBtn: document.getElementById('close-mly'),
+    mlyContainer: document.getElementById('mly')
+};
+
+// 4. Style Switcher
+if (elements.styleDropdown) {
+    elements.styleDropdown.addEventListener('change', (e) => {
         Object.values(layers).forEach(layer => map.removeLayer(layer));
-        // Add the selected one
-        if (layers[selectedStyle]) {
-            layers[selectedStyle].addTo(map);
-        }
+        if (layers[e.target.value]) layers[e.target.value].addTo(map);
     });
 }
 
-// 4. Search Functionality (Nominatim Fallback)
+// 5. Search Logic
 async function performSearch() {
-    const query = document.getElementById('location-input').value;
+    const query = elements.locationInput.value;
     if (!query) return;
-
     try {
-        const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}`);
-        const data = await response.json();
-        
+        const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}`);
+        const data = await res.json();
         if (data && data.length > 0) {
-            const { lat, lon } = data[0];
-            map.setView([lat, lon], 16);
+            map.setView([data[0].lat, data[0].lon], 16);
         } else {
-            alert("Location not found. Try a more specific address.");
+            alert("Location not found.");
         }
-    } catch (error) {
-        console.error("Search Error:", error);
-        alert("Search service currently unavailable.");
+    } catch (err) {
+        console.error("Search error", err);
     }
 }
 
-// 5. Mapillary Street View Logic
-function openStreetView(lat, lon) {
-    const mlyContainer = document.getElementById('mly');
-    const closeBtn = document.getElementById('close-mly');
+if (elements.searchBtn) elements.searchBtn.onclick = performSearch;
+if (elements.locationInput) {
+    elements.locationInput.onkeypress = (e) => { if (e.key === 'Enter') performSearch(); };
+}
 
-    // Lazy-load the viewer on first use
+// 6. Street View Logic
+function openStreetView(lat, lon) {
     if (!mlyViewer) {
         mlyViewer = new mapillary.Viewer({
             accessToken: MLY_ACCESS_TOKEN,
             container: 'mly',
-            component: { 
-                cover: false, 
-                stockControls: true,
-                direction: true
-            }
+            component: { cover: false, stockControls: true }
         });
     }
 
-    // Attempt to find imagery near the dropped point
     mlyViewer.moveCloseTo(lat, lon)
         .then(() => {
-            mlyContainer.style.display = 'block';
-            closeBtn.classList.remove('hidden');
+            elements.mlyContainer.style.display = 'block';
+            elements.closeMlyBtn.classList.remove('hidden');
         })
-        .catch((err) => {
-            // Requirement: Let user know if street view is unavailable
-            alert("No Street View imagery found at this location. Try dropping the pin on a main road.");
-            console.warn("Mapillary error:", err);
+        .catch(() => {
+            alert("No Street View imagery available here. Try a main road.");
         });
 }
 
-function closeStreetView() {
-    document.getElementById('mly').style.display = 'none';
-    document.getElementById('close-mly').classList.add('hidden');
+if (elements.closeMlyBtn) {
+    elements.closeMlyBtn.onclick = () => {
+        elements.mlyContainer.style.display = 'none';
+        elements.closeMlyBtn.classList.add('hidden');
+    };
 }
 
-// 6. Professional Drag-and-Drop Pin Logic
-const dragPin = document.getElementById('drag-indicator');
-
-if (dragPin) {
-    dragPin.onpointerdown = function(e) {
-        // Prevent map panning while dragging the pin
+// 7. Fixed Mobile Dragging
+if (elements.dragPin) {
+    elements.dragPin.onpointerdown = function(e) {
+        elements.dragPin.setPointerCapture(e.pointerId);
         map.dragging.disable();
-        dragPin.setPointerCapture(e.pointerId);
         
         const onPointerUp = (ev) => {
-            // Re-enable map movement
             map.dragging.enable();
-            dragPin.releasePointerCapture(e.pointerId);
+            elements.dragPin.releasePointerCapture(e.pointerId);
             
-            // Convert the release point (pixels) to GPS coordinates
             const pixelPoint = L.point(ev.clientX, ev.clientY);
             const coords = map.containerPointToLatLng(pixelPoint);
             
             openStreetView(coords.lat, coords.lng);
-            
-            // Clean up listener
-            dragPin.removeEventListener('pointerup', onPointerUp);
+            elements.dragPin.removeEventListener('pointerup', onPointerUp);
         };
-
-        dragPin.addEventListener('pointerup', onPointerUp);
+        elements.dragPin.addEventListener('pointerup', onPointerUp);
     };
-}
-
-// 7. UI Event Listeners
-const searchBtn = document.getElementById('search-btn');
-if (searchBtn) {
-    searchBtn.onclick = performSearch;
-}
-
-const locationInput = document.getElementById('location-input');
-if (locationInput) {
-    locationInput.onkeypress = (e) => {
-        if (e.key === 'Enter') performSearch();
-    };
-}
-
-const closeBtn = document.getElementById('close-mly');
-if (closeBtn) {
-    closeBtn.onclick = closeStreetView;
 }
